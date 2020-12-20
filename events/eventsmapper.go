@@ -8,8 +8,8 @@ import (
 // NewEventsMapper create new instance of events mapper with registered events
 func NewEventsMapper() *goeh.EventsMapper {
 	m := new(goeh.EventsMapper)
-	m.Register(new(eventsservicesmgmt.RegisterServiceEvent))
-	m.Register(new(eventsservicesmgmt.UnregisterServiceEvent))
+	m.Register(new(eventsservicesmgmt.RegisterServiceCommand))
+	m.Register(new(eventsservicesmgmt.UnregisterServiceCommand))
 
 	return m
 }

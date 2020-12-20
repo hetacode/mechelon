@@ -3,11 +3,12 @@ package main
 import (
 	"os"
 
+	smgcommandhandlers "github.com/hetacode/mechelon/services/services-mgmt/command-handlers"
+
 	gobus "github.com/hetacode/go-bus"
 	goeh "github.com/hetacode/go-eh"
 	"github.com/hetacode/mechelon/events"
 	eventsservicesmgmt "github.com/hetacode/mechelon/events/services-mgmt"
-	smgeventhandlers "github.com/hetacode/mechelon/services/services-mgmt/event-handlers"
 )
 
 func main() {
@@ -45,6 +46,6 @@ func initEventsConsumer(bus gobus.ServiceBus, mgr *goeh.EventsHandlerManager) {
 }
 
 func registerEventHandlers(mgr *goeh.EventsHandlerManager) {
-	mgr.Register(new(eventsservicesmgmt.RegisterServiceEvent), &smgeventhandlers.RegisterServiceEventHandler{})
-	mgr.Register(new(eventsservicesmgmt.UnregisterServiceEvent), &smgeventhandlers.UnregisterServiceEventHandler{})
+	mgr.Register(new(eventsservicesmgmt.RegisterServiceCommand), &smgcommandhandlers.RegisterServiceCommandHandler{})
+	mgr.Register(new(eventsservicesmgmt.UnregisterServiceCommand), &smgcommandhandlers.UnregisterServiceCommandHandler{})
 }
