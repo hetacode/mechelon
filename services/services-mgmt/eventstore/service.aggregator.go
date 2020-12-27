@@ -1,8 +1,8 @@
 package smgeventstore
 
 import (
+	"fmt"
 	"log"
-	"time"
 
 	goeh "github.com/hetacode/go-eh"
 	eventsservicesmgmt "github.com/hetacode/mechelon/events/services-mgmt"
@@ -33,33 +33,45 @@ func (a *ServiceAggregator) Replay(state *ServiceStateEntity, events []goeh.Even
 	}
 	for _, ev := range events {
 		switch ev.GetType() {
-		case new(eventsservicesmgmt.RegisterServiceCommand).GetType():
-			e := ev.(*eventsservicesmgmt.RegisterServiceCommand)
+		case new(eventsservicesmgmt.ProjectServiceCreatedEvent).GetType():
+			e := ev.(*eventsservicesmgmt.ProjectServiceCreatedEvent)
+			if a.State.ServiceName == e.ServiceName {
+				log.Printf("err ProjectServiceCreatedEvent service '%s' exist for project '%s'", e.ServiceName, e.ProjectName)
+				return
+			}
+			a.State.ServiceName = e.ServiceName
+			a.State.ProjectName = e.ProjectName
+			a.State.Instances = make([]ServiceInstance, 0)
+
+		case new(eventsservicesmgmt.InstanceAddedToServiceEvent).GetType():
+			e := ev.(*eventsservicesmgmt.InstanceAddedToServiceEvent)
 			// TODO: move to separate function
-			if a.State.ServiceName == "" { // state doesn't exist
-				a.State.ServiceName = e.ServiceName
-				a.State.ProjectName = e.ProjectName
-				a.State.Instances = []ServiceInstance{
-					{
-						Name:      e.InstanceName,
-						CreatedAt: time.Now().Unix(),
-						State:     Active,
-					},
-				}
+			if a.State.ServiceName != "" { // state doesn't exist
+				log.Printf("err InstanceAddedToServiceEvent service '%s' doesn't exist for project '%s'", e.ServiceName, e.ProjectName)
+				return
 			} else { // add instance to existing service instance state
 				a.State.Instances = append(a.State.Instances, ServiceInstance{
 					Name:      e.InstanceName,
-					CreatedAt: time.Now().Unix(),
+					CreatedAt: e.CreateAt,
 					State:     Active,
 				})
 			}
-		case new(eventsservicesmgmt.UnregisterServiceCommand).GetType():
-			e := ev.(*eventsservicesmgmt.UnregisterServiceCommand)
-			if a.State.ServiceName == "" {
-				log.Printf("err: cannot UnregisterServiceCommand because service '%s' for project '%s' doesn't exist", e.ServiceName, e.ProjectName)
+
+		case new(eventsservicesmgmt.ProjectServiceRemovedEvent).GetType():
+			e := ev.(*eventsservicesmgmt.ProjectServiceRemovedEvent)
+			a.State.Instances = make([]ServiceInstance, 0)
+			log.Printf("service '%s' has been removed from '%s' project", e.ServiceName, e.ProjectName)
+
+		case new(eventsservicesmgmt.InstanceRemovedFromServiceEvent).GetType():
+			e := ev.(*eventsservicesmgmt.InstanceRemovedFromServiceEvent)
+			if a.State.ServiceName != "" {
+				log.Printf("err: InstanceRemovedFromServiceEvent service '%s' for project '%s' doesn't exist", e.ServiceName, e.ProjectName)
 				break
 			} else {
-				// TODO: check nullability of a.state.instances
+				if a.State.Instances == nil {
+					log.Printf("err: InstanceRemovedFromServiceEvent state instances slice is nil for service '%s' in '%s' project", e.ServiceName, e.ProjectName)
+					return
+				}
 				idx := -1
 				for i, ins := range a.State.Instances {
 					if ins.Name == e.InstanceName {
@@ -68,7 +80,7 @@ func (a *ServiceAggregator) Replay(state *ServiceStateEntity, events []goeh.Even
 					}
 				}
 				if idx < 0 {
-					log.Printf("err: cannot UnregisterServiceCommand because instance '%s' for service '%s' from project '%s' doesn't exists", e.InstanceName, e.ServiceName, e.ProjectName)
+					log.Printf("err: cannot InstanceRemovedFromServiceEvent because instance '%s' for service '%s' from project '%s' doesn't exists", e.InstanceName, e.ServiceName, e.ProjectName)
 					break
 				}
 				a.State.Instances[idx] = a.State.Instances[len(a.State.Instances)-1]
@@ -90,4 +102,9 @@ func (a *ServiceAggregator) Clear() {
 }
 
 // Modfications of aggregate
-// TODO:
+
+// RegisterNewService - generate an event for new service registered in system
+func (a *ServiceAggregator) RegisterNewService(projectName, serviceName, instanceName string) {
+	id := fmt.Sprintf("%s-%s", projectName, serviceName)
+	panic(id)
+}

@@ -1,0 +1,17 @@
+package eventsservicesmgmt
+
+import goeh "github.com/hetacode/go-eh"
+
+// ProjectServiceCreatedEvent new service has been created for given project
+type ProjectServiceCreatedEvent struct {
+	*goeh.EventData
+	// should be unique
+	ProjectName string `json:"project_name"`
+	// should be unique per project
+	ServiceName string `json:"service_name"`
+}
+
+// GetType of event
+func (e *ProjectServiceCreatedEvent) GetType() string {
+	return "ProjectServiceCreatedEvent"
+}
