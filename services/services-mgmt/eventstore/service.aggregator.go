@@ -3,6 +3,7 @@ package smgeventstore
 import (
 	"fmt"
 	"log"
+	"time"
 
 	goeh "github.com/hetacode/go-eh"
 	eventsservicesmgmt "github.com/hetacode/mechelon/events/services-mgmt"
@@ -106,5 +107,74 @@ func (a *ServiceAggregator) Clear() {
 // RegisterNewService - generate an event for new service registered in system
 func (a *ServiceAggregator) RegisterNewService(projectName, serviceName, instanceName string) {
 	id := fmt.Sprintf("%s-%s", projectName, serviceName)
-	panic(id)
+	if a.State.ServiceName == "" {
+		createdServiceEv := &eventsservicesmgmt.ProjectServiceCreatedEvent{
+			EventData:   &goeh.EventData{ID: id},
+			ProjectName: projectName,
+			ServiceName: serviceName,
+		}
+		a.pendingEvents = append(a.pendingEvents, createdServiceEv)
+	}
+
+	createInstanceEv := &eventsservicesmgmt.InstanceAddedToServiceEvent{
+		EventData:    &goeh.EventData{ID: id},
+		ProjectName:  projectName,
+		ServiceName:  serviceName,
+		InstanceName: instanceName,
+		CreateAt:     time.Now().Unix(),
+	}
+	a.pendingEvents = append(a.pendingEvents, createInstanceEv)
+}
+
+// RemoveInstanceFromService - just generate an event about removed instance from service
+func (a *ServiceAggregator) RemoveInstanceFromService(projectName, serviceName, instanceName string) {
+	id := fmt.Sprintf("%s-%s", projectName, serviceName)
+
+	found := false
+	for _, inst := range a.State.Instances {
+		if inst.Name == instanceName {
+			found = true
+		}
+	}
+
+	if found {
+		ev := &eventsservicesmgmt.InstanceRemovedFromServiceEvent{
+			EventData:    &goeh.EventData{ID: id},
+			ProjectName:  projectName,
+			ServiceName:  serviceName,
+			InstanceName: instanceName,
+			RemovedAt:    time.Now().Unix(),
+		}
+		a.pendingEvents = append(a.pendingEvents, ev)
+	} else {
+		log.Printf("RemoveInstanceFromService cannot find '%s' instance in '%s' service for '%s' project", instanceName, serviceName, projectName)
+	}
+}
+
+// RemoveService from specific project
+// If any instance exists generate events for each one
+func (a *ServiceAggregator) RemoveService(projectName, serviceName string) {
+	id := fmt.Sprintf("%s-%s", projectName, serviceName)
+
+	instancesEvents := make([]goeh.Event, 0, 1)
+	// Get all instances
+	for _, inst := range a.State.Instances {
+		ev := &eventsservicesmgmt.InstanceRemovedFromServiceEvent{
+			EventData:    &goeh.EventData{ID: id},
+			ProjectName:  projectName,
+			ServiceName:  serviceName,
+			InstanceName: inst.Name,
+			RemovedAt:    time.Now().Unix(),
+		}
+		instancesEvents = append(instancesEvents, ev)
+	}
+
+	removedServiceEv := &eventsservicesmgmt.ProjectServiceRemovedEvent{
+		EventData:   &goeh.EventData{ID: id},
+		ProjectName: projectName,
+		ServiceName: serviceName,
+	}
+
+	a.pendingEvents = append(a.pendingEvents, removedServiceEv)
+	a.pendingEvents = append(a.pendingEvents, instancesEvents...)
 }
