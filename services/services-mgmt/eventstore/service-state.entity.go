@@ -1,10 +1,22 @@
 package smgeventstore
 
+// State basic interface
+// Contains GetVersion func to get current version of state
+type State interface {
+	GetVersion() int64
+}
+
 // ServiceStateEntity represent a state of given service - keep status of all active instances
 type ServiceStateEntity struct {
+	Version     int64             `json:"version"`
 	ProjectName string            `json:"project_name"`
 	ServiceName string            `json:"service_name"`
 	Instances   []ServiceInstance `json:"instances"`
+}
+
+// GetVersion of state
+func (s *ServiceStateEntity) GetVersion() int64 {
+	return s.Version
 }
 
 // ServiceInstance basic data like name or creation time
