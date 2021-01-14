@@ -10,6 +10,7 @@ require (
 	github.com/gofrs/uuid v4.0.0+incompatible // indirect
 	github.com/golang/protobuf v1.4.3 // indirect
 	github.com/google/go-cmp v0.5.4 // indirect
+	github.com/hashicorp/go-uuid v1.0.2 // indirect
 	github.com/hetacode/go-bus v0.0.3
 	github.com/hetacode/go-eh v0.0.2
 	github.com/kr/text v0.2.0 // indirect

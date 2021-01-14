@@ -6,4 +6,5 @@ import goeh "github.com/hetacode/go-eh"
 type EventStore interface {
 	GetSnapshot(key string, stateType interface{}) (state interface{}, lastEventPosition int64)
 	GetEvents(key string, position int64) []goeh.Event
+	PushNewEvents(key string, events []goeh.Event) error
 }
