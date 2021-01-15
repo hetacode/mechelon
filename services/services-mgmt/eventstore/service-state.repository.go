@@ -15,7 +15,11 @@ type ServiceStateRepository struct {
 // GetAggregator - create aggregator instance with rebuilt state
 func (r *ServiceStateRepository) GetAggregator(projectName, serviceName string) *ServiceAggregator {
 	key := fmt.Sprintf("%s-%s", projectName, serviceName)
-	state := r.EventStore.GetSnapshot(key, new(ServiceEventStore)).(*ServiceStateEntity)
+	var state *ServiceStateEntity
+	stateSnap := r.EventStore.GetSnapshot(key, new(ServiceStateEntity))
+	if stateSnap != nil {
+		state = stateSnap.(*ServiceStateEntity)
+	}
 	position := int64(0)
 	if state != nil {
 		position = state.GetVersion()

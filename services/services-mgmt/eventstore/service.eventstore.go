@@ -8,6 +8,7 @@ import (
 
 	"github.com/EventStore/EventStore-Client-Go/client"
 	"github.com/EventStore/EventStore-Client-Go/direction"
+	"github.com/EventStore/EventStore-Client-Go/errors"
 	"github.com/EventStore/EventStore-Client-Go/messages"
 	"github.com/EventStore/EventStore-Client-Go/streamrevision"
 	"github.com/gofrs/uuid"
@@ -27,6 +28,11 @@ func NewServiceEventStore(em *goeh.EventsMapper) arch.EventStore {
 	if e != nil {
 		panic(e)
 	}
+
+	if e = c.Connect(); e != nil {
+		panic(e)
+	}
+
 	es := &ServiceEventStore{
 		EventStoreClient: c,
 		EventsMapper:     em,
@@ -38,9 +44,11 @@ func NewServiceEventStore(em *goeh.EventsMapper) arch.EventStore {
 // GetSnapshot of state
 func (s *ServiceEventStore) GetSnapshot(key string, stateType interface{}) (state interface{}) {
 	streamName := key + "-snapshot"
-	events, err := s.EventStoreClient.ReadStreamEvents(context.Background(), direction.Backwards, streamName, 0, 1, true)
-	if err != nil {
+	events, err := s.EventStoreClient.ReadStreamEvents(context.Background(), direction.Backwards, streamName, streamrevision.StreamRevisionEnd, 1, true)
+	if err != nil && err != errors.ErrStreamNotFound {
 		log.Printf("GetSnapshot err: %s", err)
+		return nil
+	} else if err != nil {
 		return nil
 	}
 	if len(events) > 0 {
@@ -86,7 +94,7 @@ func (s *ServiceEventStore) GetEvents(key string, position int64) []goeh.Event {
 		events, err := s.EventStoreClient.ReadStreamEvents(context.Background(), direction.Forwards, streamName, uint64(position), 20, true)
 		if err != nil {
 			log.Printf("GetEvents err: %s", err)
-			return nil
+			return result
 		}
 		for _, ev := range events {
 			data := ev.Data
@@ -112,6 +120,8 @@ func (s *ServiceEventStore) SaveNewEvents(key string, events []goeh.Event) error
 
 	storeEvents := make([]messages.ProposedEvent, 0)
 	for _, ev := range events {
+		ev.SavePayload(ev)
+
 		oid, _ := uuid.NewV4()
 		esEv := messages.ProposedEvent{
 			EventID:      oid,
