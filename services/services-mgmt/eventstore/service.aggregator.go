@@ -11,9 +11,8 @@ import (
 
 // ServiceAggregator - an obejct to retrive state, generate events and save them to the event store
 type ServiceAggregator struct {
-	ID      string
-	Version int64
-	State   *ServiceStateEntity
+	ID    string
+	State *ServiceStateEntity
 
 	pendingEvents []goeh.Event
 }
@@ -24,6 +23,14 @@ func NewServiceAggregator() *ServiceAggregator {
 		pendingEvents: make([]goeh.Event, 0),
 	}
 	return a
+}
+
+// GetVersion of state
+func (a *ServiceAggregator) GetVersion() int64 {
+	if a.State == nil {
+		return -1
+	}
+	return a.State.Version
 }
 
 // Replay all needed events with given snapshot state
@@ -89,6 +96,7 @@ func (a *ServiceAggregator) Replay(state *ServiceStateEntity, events []goeh.Even
 				a.State.Instances = a.State.Instances[:len(a.State.Instances)-1]
 			}
 		}
+		a.State.Version = a.State.Version + 1
 	}
 }
 
