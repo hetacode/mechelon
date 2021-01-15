@@ -3,29 +3,22 @@ package main
 import (
 	"os"
 
-	smgcommandhandlers "github.com/hetacode/mechelon/services/services-mgmt/command-handlers"
-
 	gobus "github.com/hetacode/go-bus"
 	goeh "github.com/hetacode/go-eh"
-	"github.com/hetacode/mechelon/events"
 	eventsservicesmgmt "github.com/hetacode/mechelon/events/services-mgmt"
+	smgcommandhandlers "github.com/hetacode/mechelon/services/services-mgmt/command-handlers"
+	smgcontainer "github.com/hetacode/mechelon/services/services-mgmt/container"
 )
 
 func main() {
 	println("service management is starting")
 	waitCh := make(<-chan os.Signal)
 
+	c := smgcontainer.NewContainer()
 	eventsMgr := goeh.NewEventsHandlerManager()
 	registerEventHandlers(eventsMgr)
 
-	kind := gobus.RabbitMQServiceBusOptionsFanOutKind
-	bus := gobus.NewRabbitMQServiceBus(events.NewEventsMapper(), &gobus.RabbitMQServiceBusOptions{
-		Kind:      &kind,
-		Exchanage: "test-ex", //TODO: take from env vars
-		Queue:     "test-queue",
-		Server:    "amqp://rabbit:5672",
-	})
-	go initEventsConsumer(bus, eventsMgr)
+	go initEventsConsumer(c.CommandsConsumerBus, eventsMgr)
 
 	println("service management is running")
 	<-waitCh

@@ -12,12 +12,27 @@ import (
 	"github.com/EventStore/EventStore-Client-Go/streamrevision"
 	"github.com/gofrs/uuid"
 	goeh "github.com/hetacode/go-eh"
+	"github.com/hetacode/mechelon/arch"
 )
 
 // ServiceEventStore - implementation of EventStore base on EventStoreDB
 type ServiceEventStore struct {
 	EventStoreClient *client.Client
 	EventsMapper     *goeh.EventsMapper
+}
+
+// NewServiceEventStore instance
+func NewServiceEventStore(em *goeh.EventsMapper) arch.EventStore {
+	c, e := client.NewClient(&client.Configuration{Address: "localhost:2113", DisableTLS: true}) // TODO: move to env variables
+	if e != nil {
+		panic(e)
+	}
+	es := &ServiceEventStore{
+		EventStoreClient: c,
+		EventsMapper:     em,
+	}
+
+	return es
 }
 
 // GetSnapshot of state
