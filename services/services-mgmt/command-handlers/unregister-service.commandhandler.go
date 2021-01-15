@@ -8,7 +8,7 @@ import (
 
 // UnregisterServiceCommandHandler struct
 type UnregisterServiceCommandHandler struct {
-	Container smgcontainer.Container
+	Container *smgcontainer.Container
 }
 
 // Handle UnregisterServiceEvent

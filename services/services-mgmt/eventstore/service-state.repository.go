@@ -3,13 +3,12 @@ package smgeventstore
 import (
 	"fmt"
 
+	goeh "github.com/hetacode/go-eh"
 	"github.com/hetacode/mechelon/arch"
 )
 
+// ServiceStateRepository struct
 type ServiceStateRepository struct {
-	// TODO:
-	// message bus instance
-
 	EventStore arch.EventStore
 }
 
@@ -32,4 +31,14 @@ func (r *ServiceStateRepository) GetAggregator(projectName, serviceName string) 
 	}
 
 	return aggr
+}
+
+// SaveEvents to event store
+func (r *ServiceStateRepository) SaveEvents(projectName, serviceName string, events []goeh.Event) error {
+	key := fmt.Sprintf("%s-%s", projectName, serviceName)
+	if err := r.EventStore.SaveNewEvents(key, events); err != nil {
+		return err
+	}
+
+	return nil
 }

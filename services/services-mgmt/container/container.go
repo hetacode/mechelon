@@ -13,8 +13,9 @@ import (
 )
 
 type Container struct {
-	EventStore          arch.EventStore
-	CommandsConsumerBus smgtypes.CommandsConsumerBus
+	EventStore             arch.EventStore
+	CommandsConsumerBus    smgtypes.CommandsConsumerBus
+	ServiceStateRepository *smgeventstore.ServiceStateRepository
 }
 
 func NewContainer() *Container {
@@ -22,9 +23,17 @@ func NewContainer() *Container {
 		events.NewEventsMapper,
 		initEventStoreProvider,
 		initCommandsConsumerBusProvider,
+		initServiceStateRepositoryProvider,
 		wire.Struct(new(Container), "*"),
 	)
 	return nil
+}
+
+func initServiceStateRepositoryProvider(es arch.EventStore) *smgeventstore.ServiceStateRepository {
+	r := &smgeventstore.ServiceStateRepository{
+		EventStore: es,
+	}
+	return r
 }
 
 func initCommandsConsumerBusProvider(em *goeh.EventsMapper) smgtypes.CommandsConsumerBus {

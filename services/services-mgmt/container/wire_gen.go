@@ -20,9 +20,11 @@ func NewContainer() *Container {
 	eventsMapper := events.NewEventsMapper()
 	eventStore := initEventStoreProvider(eventsMapper)
 	commandsConsumerBus := initCommandsConsumerBusProvider(eventsMapper)
+	serviceStateRepository := initServiceStateRepositoryProvider(eventStore)
 	container := &Container{
-		EventStore:          eventStore,
-		CommandsConsumerBus: commandsConsumerBus,
+		EventStore:             eventStore,
+		CommandsConsumerBus:    commandsConsumerBus,
+		ServiceStateRepository: serviceStateRepository,
 	}
 	return container
 }
@@ -30,8 +32,16 @@ func NewContainer() *Container {
 // container.go:
 
 type Container struct {
-	EventStore          arch.EventStore
-	CommandsConsumerBus smgtypes.CommandsConsumerBus
+	EventStore             arch.EventStore
+	CommandsConsumerBus    smgtypes.CommandsConsumerBus
+	ServiceStateRepository *smgeventstore.ServiceStateRepository
+}
+
+func initServiceStateRepositoryProvider(es arch.EventStore) *smgeventstore.ServiceStateRepository {
+	r := &smgeventstore.ServiceStateRepository{
+		EventStore: es,
+	}
+	return r
 }
 
 func initCommandsConsumerBusProvider(em *goeh.EventsMapper) smgtypes.CommandsConsumerBus {

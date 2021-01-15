@@ -16,7 +16,7 @@ func main() {
 
 	c := smgcontainer.NewContainer()
 	eventsMgr := goeh.NewEventsHandlerManager()
-	registerEventHandlers(eventsMgr)
+	registerEventHandlers(eventsMgr, c)
 
 	go initEventsConsumer(c.CommandsConsumerBus, eventsMgr)
 
@@ -38,7 +38,7 @@ func initEventsConsumer(bus gobus.ServiceBus, mgr *goeh.EventsHandlerManager) {
 	}
 }
 
-func registerEventHandlers(mgr *goeh.EventsHandlerManager) {
-	mgr.Register(new(eventsservicesmgmt.RegisterServiceCommand), &smgcommandhandlers.RegisterServiceCommandHandler{})
-	mgr.Register(new(eventsservicesmgmt.UnregisterServiceCommand), &smgcommandhandlers.UnregisterServiceCommandHandler{})
+func registerEventHandlers(mgr *goeh.EventsHandlerManager, c *smgcontainer.Container) {
+	mgr.Register(new(eventsservicesmgmt.RegisterServiceCommand), &smgcommandhandlers.RegisterServiceCommandHandler{Container: c})
+	mgr.Register(new(eventsservicesmgmt.UnregisterServiceCommand), &smgcommandhandlers.UnregisterServiceCommandHandler{Container: c})
 }
