@@ -6,6 +6,7 @@ import (
 	"time"
 
 	goeh "github.com/hetacode/go-eh"
+	"github.com/hetacode/mechelon/arch"
 	eventsservicesmgmt "github.com/hetacode/mechelon/events/services-mgmt"
 )
 
@@ -28,7 +29,7 @@ func NewServiceAggregator() *ServiceAggregator {
 // GetVersion of state
 func (a *ServiceAggregator) GetVersion() int64 {
 	if a.State == nil {
-		return -1
+		return 0
 	}
 	return a.State.Version
 }
@@ -96,7 +97,8 @@ func (a *ServiceAggregator) Replay(state *ServiceStateEntity, events []goeh.Even
 				a.State.Instances = a.State.Instances[:len(a.State.Instances)-1]
 			}
 		}
-		a.State.Version = a.State.Version + 1
+		ee := ev.(arch.ExtendedEvent)
+		a.State.Version = int64(ee.GetVersion())
 	}
 }
 

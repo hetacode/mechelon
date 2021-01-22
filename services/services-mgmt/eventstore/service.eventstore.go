@@ -103,6 +103,10 @@ func (s *ServiceEventStore) GetEvents(key string, position int64) []goeh.Event {
 				log.Printf("cannot resoleve event data err: %s", err)
 				return nil
 			}
+
+			ee := mappedEvent.(arch.ExtendedEvent)
+			ee.SetVersion(ev.Position.Commit)
+
 			result = append(result, mappedEvent)
 		}
 		if len(events) < 20 {

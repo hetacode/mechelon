@@ -13,9 +13,21 @@ type InstanceRemovedFromServiceEvent struct {
 	ServiceName string `json:"service_name"`
 	// time
 	RemovedAt int64 `json:"removed_at"`
+
+	Version uint64 `json:"version"`
 }
 
 // GetType of event
 func (e *InstanceRemovedFromServiceEvent) GetType() string {
 	return "InstanceRemovedFromServiceEvent"
+}
+
+// GetVersion of event
+func (e *InstanceRemovedFromServiceEvent) GetVersion() uint64 {
+	return e.Version
+}
+
+// SetVersion of event
+func (e *InstanceRemovedFromServiceEvent) SetVersion(v uint64) {
+	e.Version = v
 }

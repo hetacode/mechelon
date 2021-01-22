@@ -18,7 +18,7 @@ func (e *RegisterServiceCommandHandler) Handle(event goeh.Event) {
 	log.Printf("RegisterServiceCommandHandler start")
 	ev := event.(*eventsservicesmgmt.RegisterServiceCommand)
 	aggr := e.Container.ServiceStateRepository.GetAggregator(ev.ProjectName, ev.ServiceName)
-	aggr.RegisterNewService(ev.ProjectName, ev.InstanceName, ev.InstanceName)
+	aggr.RegisterNewService(ev.ProjectName, ev.ServiceName, ev.InstanceName)
 
 	newEvents := aggr.GetPendingEvents()
 	if err := e.Container.ServiceStateRepository.SaveEvents(ev.ProjectName, ev.ServiceName, newEvents); err != nil {
