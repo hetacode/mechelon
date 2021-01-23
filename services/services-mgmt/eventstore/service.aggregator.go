@@ -55,7 +55,7 @@ func (a *ServiceAggregator) Replay(state *ServiceStateEntity, events []goeh.Even
 		case new(eventsservicesmgmt.InstanceAddedToServiceEvent).GetType():
 			e := ev.(*eventsservicesmgmt.InstanceAddedToServiceEvent)
 			// TODO: move to separate function
-			if a.State.ServiceName != "" { // state doesn't exist
+			if a.State.ServiceName == "" { // state doesn't exist
 				log.Printf("err InstanceAddedToServiceEvent service '%s' doesn't exist for project '%s'", e.ServiceName, e.ProjectName)
 				return
 			} else { // add instance to existing service instance state

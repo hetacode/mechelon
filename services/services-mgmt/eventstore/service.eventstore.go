@@ -82,7 +82,13 @@ func (s *ServiceEventStore) SaveSnapshot(key string, state interface{}) error {
 		Data:         bytesState,
 		UserMetadata: make([]byte, 0),
 	}
-	s.EventStoreClient.AppendToStream(context.Background(), streamName, streamrevision.StreamRevision(streamrevision.StreamRevisionStart), []messages.ProposedEvent{snapEv})
+	_, err = s.EventStoreClient.AppendToStream(context.Background(), streamName, streamrevision.StreamRevisionAny, []messages.ProposedEvent{snapEv})
+
+	if err != nil {
+		log.Printf("SaveSnapshot AppendToStream err: %s", err)
+		return err
+	}
+
 	return nil
 }
 
@@ -105,14 +111,14 @@ func (s *ServiceEventStore) GetEvents(key string, position int64) []goeh.Event {
 			}
 
 			ee := mappedEvent.(arch.ExtendedEvent)
-			ee.SetVersion(ev.Position.Commit)
+			ee.SetVersion(ev.EventNumber)
 
 			result = append(result, mappedEvent)
 		}
 		if len(events) < 20 {
 			break
 		} else {
-			position = int64(events[:1][0].Position.Commit)
+			position = int64(events[:1][0].EventNumber)
 		}
 	}
 	return result
