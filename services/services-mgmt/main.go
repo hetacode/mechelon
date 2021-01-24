@@ -41,4 +41,5 @@ func initEventsConsumer(bus gobus.ServiceBus, mgr *goeh.EventsHandlerManager) {
 func registerEventHandlers(mgr *goeh.EventsHandlerManager, c *smgcontainer.Container) {
 	mgr.Register(new(eventsservicesmgmt.RegisterServiceCommand), &smgcommandhandlers.RegisterServiceCommandHandler{Container: c})
 	mgr.Register(new(eventsservicesmgmt.UnregisterServiceCommand), &smgcommandhandlers.UnregisterServiceCommandHandler{Container: c})
+	mgr.Register(new(eventsservicesmgmt.RemoveServiceInstanceCommand), &smgcommandhandlers.RemoveServiceInstanceCommandHandler{Container: c})
 }

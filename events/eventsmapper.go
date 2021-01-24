@@ -10,6 +10,7 @@ func NewEventsMapper() *goeh.EventsMapper {
 	m := new(goeh.EventsMapper)
 	m.Register(new(eventsservicesmgmt.RegisterServiceCommand))
 	m.Register(new(eventsservicesmgmt.UnregisterServiceCommand))
+	m.Register(new(eventsservicesmgmt.RemoveServiceInstanceCommand))
 
 	m.Register(new(eventsservicesmgmt.InstanceAddedToServiceEvent))
 	m.Register(new(eventsservicesmgmt.InstanceRemovedFromServiceEvent))

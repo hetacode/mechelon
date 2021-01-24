@@ -73,7 +73,7 @@ func (a *ServiceAggregator) Replay(state *ServiceStateEntity, events []goeh.Even
 
 		case new(eventsservicesmgmt.InstanceRemovedFromServiceEvent).GetType():
 			e := ev.(*eventsservicesmgmt.InstanceRemovedFromServiceEvent)
-			if a.State.ServiceName != "" {
+			if a.State.ServiceName == "" {
 				log.Printf("err: InstanceRemovedFromServiceEvent service '%s' for project '%s' doesn't exist", e.ServiceName, e.ProjectName)
 				break
 			} else {

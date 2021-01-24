@@ -2,7 +2,7 @@ package eventsservicesmgmt
 
 import goeh "github.com/hetacode/go-eh"
 
-// RegisterServiceCommand - represent command when given service is running state - so just show being
+// RegisterServiceCommand - register new service and/or service instace
 type RegisterServiceCommand struct {
 	*goeh.EventData
 	// should be unique
