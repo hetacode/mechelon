@@ -26,5 +26,8 @@ func (e *UnregisterServiceCommandHandler) Handle(event goeh.Event) {
 		log.Printf("RegisterServiceCommandHandler SaveEvents err: %s", err)
 	}
 
+	for _, ev := range newEvents {
+		e.Container.EventsProducerBus.Publish(ev)
+	}
 	log.Printf("RegisterServiceCommandHandler end")
 }
