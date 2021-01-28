@@ -26,5 +26,8 @@ func (e *RemoveServiceInstanceCommandHandler) Handle(event goeh.Event) {
 		log.Printf("RemoveServiceInstanceCommandHandler SaveEvents err: %s", err)
 	}
 
+	for _, ev := range newEvents {
+		e.Container.EventsProducerBus.Publish(ev)
+	}
 	log.Printf("RemoveServiceInstanceCommandHandler end")
 }
