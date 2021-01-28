@@ -11,11 +11,15 @@ func NewEventsMapper() *goeh.EventsMapper {
 	m.Register(new(eventsservicesmgmt.RegisterServiceCommand))
 	m.Register(new(eventsservicesmgmt.UnregisterServiceCommand))
 	m.Register(new(eventsservicesmgmt.RemoveServiceInstanceCommand))
+	m.Register(new(eventsservicesmgmt.HealthCheckCommand))
 
 	m.Register(new(eventsservicesmgmt.InstanceAddedToServiceEvent))
 	m.Register(new(eventsservicesmgmt.InstanceRemovedFromServiceEvent))
 	m.Register(new(eventsservicesmgmt.ProjectServiceCreatedEvent))
 	m.Register(new(eventsservicesmgmt.ProjectServiceRemovedEvent))
+	m.Register(new(eventsservicesmgmt.InstanceActivatedEvent))
+	m.Register(new(eventsservicesmgmt.InstanceGotIdleEvent))
+	m.Register(new(eventsservicesmgmt.InstanceGotInactiveEvent))
 
 	return m
 }
