@@ -62,6 +62,7 @@ func (a *ServiceAggregator) Replay(state *ServiceStateEntity, events []goeh.Even
 				a.State.Instances = append(a.State.Instances, ServiceInstance{
 					Name:      e.InstanceName,
 					CreatedAt: e.CreateAt,
+					UpdatedAt: e.CreateAt,
 					State:     Active,
 				})
 			}
@@ -95,6 +96,25 @@ func (a *ServiceAggregator) Replay(state *ServiceStateEntity, events []goeh.Even
 				a.State.Instances[idx] = a.State.Instances[len(a.State.Instances)-1]
 				// a.State.Instances[len(a.State.Instances)-1] = ServiceInstance{} - unnecessary?
 				a.State.Instances = a.State.Instances[:len(a.State.Instances)-1]
+			}
+		case new(eventsservicesmgmt.InstanceActivatedEvent).GetType():
+			e := ev.(*eventsservicesmgmt.InstanceActivatedEvent)
+			if a.State.ServiceName == "" {
+				log.Printf("err: InstanceActivatedEvent service '%s' for project '%s' doesn't exist", e.ServiceName, e.ProjectName)
+				break
+			} else {
+				if a.State.Instances == nil {
+					log.Printf("err: InstanceActivatedEvent state instances slice is nil for service '%s' in '%s' project", e.ServiceName, e.ProjectName)
+					return
+				}
+
+				for i, inst := range a.State.Instances {
+					if inst.Name == e.InstanceName {
+						a.State.Instances[i].State = Active
+						a.State.Instances[i].UpdatedAt = e.UpdateAt
+						break
+					}
+				}
 			}
 		}
 		ee := ev.(arch.ExtendedEvent)
@@ -187,4 +207,29 @@ func (a *ServiceAggregator) RemoveService(projectName, serviceName string) {
 
 	a.pendingEvents = append(a.pendingEvents, removedServiceEv)
 	a.pendingEvents = append(a.pendingEvents, instancesEvents...)
+}
+
+// ServiceInstanceHealthCheck - set activity of service instance
+func (a *ServiceAggregator) ServiceInstanceHealthCheck(projectName, serviceName, instanceName string) {
+	id := fmt.Sprintf("%s-%s", projectName, serviceName)
+
+	found := false
+	for _, inst := range a.State.Instances {
+		if inst.Name == instanceName {
+			found = true
+		}
+	}
+
+	if found {
+		ev := &eventsservicesmgmt.InstanceActivatedEvent{
+			EventData:    &goeh.EventData{ID: id},
+			ProjectName:  projectName,
+			ServiceName:  serviceName,
+			InstanceName: instanceName,
+			UpdateAt:     time.Now().Unix(),
+		}
+		a.pendingEvents = append(a.pendingEvents, ev)
+	} else {
+		log.Printf("ServiceInstanceHealthCheck cannot find '%s' instance in '%s' service for '%s' project", instanceName, serviceName, projectName)
+	}
 }

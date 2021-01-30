@@ -23,6 +23,7 @@ func (s *ServiceStateEntity) GetVersion() int64 {
 type ServiceInstance struct {
 	Name      string       `json:"name"`
 	CreatedAt int64        `json:"created_at"`
+	UpdatedAt int64        `json:"updated_at"`
 	State     ServiceState `json:"state"`
 }
 
