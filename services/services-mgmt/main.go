@@ -42,4 +42,5 @@ func registerEventHandlers(mgr *goeh.EventsHandlerManager, c *smgcontainer.Conta
 	mgr.Register(new(eventsservicesmgmt.RegisterServiceCommand), &smgcommandhandlers.RegisterServiceCommandHandler{Container: c})
 	mgr.Register(new(eventsservicesmgmt.UnregisterServiceCommand), &smgcommandhandlers.UnregisterServiceCommandHandler{Container: c})
 	mgr.Register(new(eventsservicesmgmt.RemoveServiceInstanceCommand), &smgcommandhandlers.RemoveServiceInstanceCommandHandler{Container: c})
+	mgr.Register(new(eventsservicesmgmt.HealthCheckCommand), &smgcommandhandlers.HealthCheckCommandHandler{Container: c})
 }
