@@ -10,6 +10,7 @@ import (
 	"github.com/hetacode/mechelon/events"
 	smgeventstore "github.com/hetacode/mechelon/services/services-mgmt/eventstore"
 	smgtypes "github.com/hetacode/mechelon/services/services-mgmt/types"
+	smgworkers "github.com/hetacode/mechelon/services/services-mgmt/workers"
 )
 
 type Container struct {
@@ -17,6 +18,7 @@ type Container struct {
 	CommandsConsumerBus    smgtypes.CommandsConsumerBus
 	EventsProducerBus      smgtypes.EventsProducerBus
 	ServiceStateRepository *smgeventstore.ServiceStateRepository
+	WorkersManager         *smgworkers.WorkersManager
 }
 
 func NewContainer() *Container {
@@ -26,9 +28,15 @@ func NewContainer() *Container {
 		initEventsProducerBusProvider,
 		initCommandsConsumerBusProvider,
 		initServiceStateRepositoryProvider,
+		initWorkersManagerProvider,
 		wire.Struct(new(Container), "*"),
 	)
 	return nil
+}
+
+func initWorkersManagerProvider(repository *smgeventstore.ServiceStateRepository) *smgworkers.WorkersManager {
+	mgr := smgworkers.NewWorkersManager(repository)
+	return mgr
 }
 
 func initEventsProducerBusProvider(em *goeh.EventsMapper) smgtypes.EventsProducerBus {

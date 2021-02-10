@@ -12,6 +12,7 @@ import (
 	"github.com/hetacode/mechelon/events"
 	"github.com/hetacode/mechelon/services/services-mgmt/eventstore"
 	"github.com/hetacode/mechelon/services/services-mgmt/types"
+	"github.com/hetacode/mechelon/services/services-mgmt/workers"
 )
 
 // Injectors from container.go:
@@ -22,11 +23,13 @@ func NewContainer() *Container {
 	commandsConsumerBus := initCommandsConsumerBusProvider(eventsMapper)
 	eventsProducerBus := initEventsProducerBusProvider(eventsMapper)
 	serviceStateRepository := initServiceStateRepositoryProvider(eventStore)
+	workersManager := initWorkersManagerProvider(serviceStateRepository)
 	container := &Container{
 		EventStore:             eventStore,
 		CommandsConsumerBus:    commandsConsumerBus,
 		EventsProducerBus:      eventsProducerBus,
 		ServiceStateRepository: serviceStateRepository,
+		WorkersManager:         workersManager,
 	}
 	return container
 }
@@ -38,6 +41,12 @@ type Container struct {
 	CommandsConsumerBus    smgtypes.CommandsConsumerBus
 	EventsProducerBus      smgtypes.EventsProducerBus
 	ServiceStateRepository *smgeventstore.ServiceStateRepository
+	WorkersManager         *smgworkers.WorkersManager
+}
+
+func initWorkersManagerProvider(repository *smgeventstore.ServiceStateRepository) *smgworkers.WorkersManager {
+	mgr := smgworkers.NewWorkersManager(repository)
+	return mgr
 }
 
 func initEventsProducerBusProvider(em *goeh.EventsMapper) smgtypes.EventsProducerBus {
