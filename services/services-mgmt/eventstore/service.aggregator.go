@@ -50,6 +50,7 @@ func (a *ServiceAggregator) Replay(state *ServiceStateEntity, events []goeh.Even
 			}
 			a.State.ServiceName = e.ServiceName
 			a.State.ProjectName = e.ProjectName
+			a.ID = fmt.Sprintf("%s-%s", e.ProjectName, e.ServiceName)
 			a.State.Instances = make([]ServiceInstance, 0)
 
 		case new(eventsservicesmgmt.InstanceAddedToServiceEvent).GetType():
@@ -232,4 +233,28 @@ func (a *ServiceAggregator) ServiceInstanceHealthCheck(projectName, serviceName,
 	} else {
 		log.Printf("ServiceInstanceHealthCheck cannot find '%s' instance in '%s' service for '%s' project", instanceName, serviceName, projectName)
 	}
+}
+
+// SetInstanceAsIdle - instance has long inactivity period, so should be set as idle state
+func (a *ServiceAggregator) SetInstanceAsIdle(instanceName string) {
+	ev := &eventsservicesmgmt.InstanceGotIdleEvent{
+		EventData:    &goeh.EventData{ID: a.ID},
+		ProjectName:  a.State.ProjectName,
+		ServiceName:  a.State.ServiceName,
+		InstanceName: instanceName,
+		UpdateAt:     time.Now().Unix(),
+	}
+	a.pendingEvents = append(a.pendingEvents, ev)
+}
+
+// SetInstanceAsInactive - inactivity state period is too long - set instance as inactive
+func (a *ServiceAggregator) SetInstanceAsInactive(instanceName string) {
+	ev := &eventsservicesmgmt.InstanceGotInactiveEvent{
+		EventData:    &goeh.EventData{ID: a.ID},
+		ProjectName:  a.State.ProjectName,
+		ServiceName:  a.State.ServiceName,
+		InstanceName: instanceName,
+		UpdateAt:     time.Now().Unix(),
+	}
+	a.pendingEvents = append(a.pendingEvents, ev)
 }
