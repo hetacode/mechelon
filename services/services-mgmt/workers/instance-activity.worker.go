@@ -35,6 +35,7 @@ func NewInstanceActivityWorker(repository *smgeventstore.ServiceStateRepository,
 		projectName:    projectName,
 		serviceName:    serviceName,
 		period:         period,
+		isRunning:      true,
 		createdAt:      time.Now().Unix(),
 		disableChannel: disableChannel,
 	}
@@ -71,10 +72,12 @@ func (w *InstanceActivityWorker) Start() {
 			case smgeventstore.Active:
 				if time.Now().Unix()-instance.UpdatedAt > ValidActivePeriod {
 					aggr.SetInstanceAsIdle(instance.Name)
+					log.Printf("InstanceActivityWorker | '%s' instance of '%s' service for project '%s' is IDLE", instance.Name, w.serviceName, w.projectName)
 				}
 			case smgeventstore.Idle:
 				if time.Now().Unix()-instance.UpdatedAt > ValidIdlePeriod {
 					aggr.SetInstanceAsInactive(instance.Name)
+					log.Printf("InstanceActivityWorker | '%s' instance of '%s' service for project '%s' is IN_ACTIVE", instance.Name, w.serviceName, w.projectName)
 				}
 			case smgeventstore.InActive:
 				inActiveInstancesCount++

@@ -117,6 +117,7 @@ func (a *ServiceAggregator) Replay(state *ServiceStateEntity, events []goeh.Even
 					}
 				}
 			}
+			// TODO: add new events to replay - InstanceGotIdleEvent, InstanceGotInactiveEvent
 		}
 		ee := ev.(arch.ExtendedEvent)
 		a.State.Version = int64(ee.GetVersion())
