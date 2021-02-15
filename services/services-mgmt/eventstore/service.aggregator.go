@@ -117,7 +117,32 @@ func (a *ServiceAggregator) Replay(state *ServiceStateEntity, events []goeh.Even
 					}
 				}
 			}
-			// TODO: add new events to replay - InstanceGotIdleEvent, InstanceGotInactiveEvent
+		case new(eventsservicesmgmt.InstanceGotIdleEvent).GetType():
+			e := ev.(*eventsservicesmgmt.InstanceGotIdleEvent)
+			if a.State.Instances == nil {
+				log.Printf("err: InstanceGotIdleEvent state instances slice is nil for service '%s' in '%s' project", e.ServiceName, e.ProjectName)
+				return
+			}
+
+			for i, inst := range a.State.Instances {
+				if inst.Name == e.InstanceName {
+					a.State.Instances[i].State = Idle
+					break
+				}
+			}
+		case new(eventsservicesmgmt.InstanceGotInactiveEvent).GetType():
+			e := ev.(*eventsservicesmgmt.InstanceGotInactiveEvent)
+			if a.State.Instances == nil {
+				log.Printf("err: InstanceGotInactiveEvent state instances slice is nil for service '%s' in '%s' project", e.ServiceName, e.ProjectName)
+				return
+			}
+
+			for i, inst := range a.State.Instances {
+				if inst.Name == e.InstanceName {
+					a.State.Instances[i].State = InActive
+					break
+				}
+			}
 		}
 		ee := ev.(arch.ExtendedEvent)
 		a.State.Version = int64(ee.GetVersion())
