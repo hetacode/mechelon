@@ -28,7 +28,7 @@ func (r *ServiceStateRepository) GetAggregator(projectName, serviceName string) 
 	events := r.EventStore.GetEvents(key, position)
 	aggr := NewServiceAggregator()
 	aggr.Replay(state, events)
-	if len(events) >= 20 {
+	if len(events) > 20 {
 		if err := r.EventStore.SaveSnapshot(key, aggr.State); err != nil {
 			panic(err)
 		}

@@ -69,9 +69,8 @@ func (a *ServiceAggregator) Replay(state *ServiceStateEntity, events []goeh.Even
 			}
 
 		case new(eventsservicesmgmt.ProjectServiceRemovedEvent).GetType():
-			e := ev.(*eventsservicesmgmt.ProjectServiceRemovedEvent)
 			a.State.Instances = make([]ServiceInstance, 0)
-			log.Printf("service '%s' has been removed from '%s' project", e.ServiceName, e.ProjectName)
+			a.State = &ServiceStateEntity{}
 
 		case new(eventsservicesmgmt.InstanceRemovedFromServiceEvent).GetType():
 			e := ev.(*eventsservicesmgmt.InstanceRemovedFromServiceEvent)
@@ -181,6 +180,17 @@ func (a *ServiceAggregator) RegisterNewService(projectName, serviceName, instanc
 		CreateAt:     time.Now().Unix(),
 	}
 	a.pendingEvents = append(a.pendingEvents, createInstanceEv)
+}
+
+// RemoveProjectService - service should be removed from project
+func (a *ServiceAggregator) RemoveProjectService(projectName, serviceName string) {
+	id := fmt.Sprintf("%s-%s", projectName, serviceName)
+	removedServiceEv := &eventsservicesmgmt.ProjectServiceRemovedEvent{
+		EventData:   &goeh.EventData{ID: id},
+		ProjectName: projectName,
+		ServiceName: serviceName,
+	}
+	a.pendingEvents = append(a.pendingEvents, removedServiceEv)
 }
 
 // RemoveInstanceFromService - just generate an event about removed instance from service

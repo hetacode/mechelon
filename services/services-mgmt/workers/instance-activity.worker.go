@@ -66,6 +66,7 @@ func (w *InstanceActivityWorker) Start() {
 		}
 
 		instancesCount := len(aggr.State.Instances)
+		log.Printf("Instances count: %d", instancesCount)
 		inActiveInstancesCount := 0
 		for _, instance := range aggr.State.Instances {
 			switch instance.State {
@@ -80,14 +81,17 @@ func (w *InstanceActivityWorker) Start() {
 					log.Printf("InstanceActivityWorker | '%s' instance of '%s' service for project '%s' is IN_ACTIVE", instance.Name, w.serviceName, w.projectName)
 				}
 			case smgeventstore.InActive:
+				aggr.RemoveInstanceFromService(w.projectName, w.serviceName, instance.Name)
 				inActiveInstancesCount++
 			}
 		}
 
+		log.Printf("Inactive instances count: %d", inActiveInstancesCount)
+
 		// No active instances - worker should be stopped
 		if instancesCount == inActiveInstancesCount {
 			w.disableChannel <- fmt.Sprintf("%s-%s", w.projectName, w.serviceName)
-			continue
+			aggr.RemoveProjectService(w.projectName, w.serviceName)
 		}
 
 		events := aggr.GetPendingEvents()
