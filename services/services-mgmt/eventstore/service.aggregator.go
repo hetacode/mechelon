@@ -172,6 +172,13 @@ func (a *ServiceAggregator) RegisterNewService(projectName, serviceName, instanc
 		a.pendingEvents = append(a.pendingEvents, createdServiceEv)
 	}
 
+	// Searching for instance with the same name - if exists stop the next steps
+	for _, inst := range a.State.Instances {
+		if inst.Name == instanceName {
+			return
+		}
+	}
+
 	createInstanceEv := &eventsservicesmgmt.InstanceAddedToServiceEvent{
 		EventData:    &goeh.EventData{ID: id},
 		ProjectName:  projectName,
