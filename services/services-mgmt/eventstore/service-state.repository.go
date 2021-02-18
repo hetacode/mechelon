@@ -17,10 +17,11 @@ func (r *ServiceStateRepository) GetAggregator(projectName, serviceName string) 
 	key := fmt.Sprintf("%s-%s", projectName, serviceName)
 	var state *ServiceStateEntity
 	stateSnap := r.EventStore.GetSnapshot(key, new(ServiceStateEntity))
+
 	if stateSnap != nil {
 		state = stateSnap.(*ServiceStateEntity)
 	}
-	position := int64(0)
+	position := int64(-1)
 	if state != nil {
 		position = state.GetVersion()
 	}
