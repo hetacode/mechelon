@@ -19,7 +19,7 @@ func (e *HealthCheckCommandHandler) Handle(event goeh.Event) {
 	ev := event.(*eventsservicesmgmt.HealthCheckCommand)
 
 	aggr := e.Container.ServiceStateRepository.GetAggregator(ev.ProjectName, ev.ServiceName)
-	aggr.RemoveService(ev.ProjectName, ev.ServiceName)
+	aggr.ServiceInstanceHealthCheck(ev.ProjectName, ev.ServiceName, ev.InstanceName)
 
 	newEvents := aggr.GetPendingEvents()
 	if err := e.Container.ServiceStateRepository.SaveEvents(ev.ProjectName, ev.ServiceName, newEvents); err != nil {
