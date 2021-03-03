@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	gtwhandlers "github.com/hetacode/mechelon/services/gateway/handlers"
@@ -30,7 +31,7 @@ func main() {
 	corsRouter := useCORS(router)
 	srv := &http.Server{
 		Handler:      corsRouter,
-		Addr:         "0.0.0.0:4000", // TODO: move PORT to the env file
+		Addr:         "0.0.0.0:" + os.Getenv("SVC_API_GATEWAY_PORT"),
 		ReadTimeout:  time.Second * 15,
 		WriteTimeout: time.Second * 5,
 	}
