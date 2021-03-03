@@ -22,6 +22,17 @@ Content-Type: application/json
     "instance_name": "pay-2"
 }
 
+
+### Ping health check
+post {{endpointClients}}/health
+Content-Type: application/json
+
+{
+    "project_name": "{{projectName}}",
+    "service_name": "{{paymentsServiceName}}",
+    "instance_name": "pay-1"
+}
+
 ### Remove one instance
 post {{endpointClients}}/remove
 Content-Type: application/json
