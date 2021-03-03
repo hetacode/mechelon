@@ -5,10 +5,21 @@
 
 package gtwcontainer
 
+import (
+	"github.com/hetacode/go-bus"
+	"github.com/hetacode/go-eh"
+	"github.com/hetacode/mechelon/events"
+	"os"
+)
+
 // Injectors from container.go:
 
 func NewContainer() *Container {
-	container := &Container{}
+	eventsMapper := events.NewEventsMapper()
+	serviceBus := initCommandsBusProducerProvider(eventsMapper)
+	container := &Container{
+		CommandsBusProducer: serviceBus,
+	}
 	return container
 }
 
@@ -16,4 +27,16 @@ func NewContainer() *Container {
 
 // Container struct keeping all of the required dependencies which are linked together
 type Container struct {
+	CommandsBusProducer gobus.ServiceBus
+}
+
+func initCommandsBusProducerProvider(em *goeh.EventsMapper) gobus.ServiceBus {
+	kind := gobus.RabbitMQServiceBusOptionsFanOutKind
+	bus := gobus.NewRabbitMQServiceBus(em, &gobus.RabbitMQServiceBusOptions{
+		Kind:      &kind,
+		Exchanage: os.Getenv("SVC_SERVICES_MGMT_SB_COMMANDS_EXCHANGE"),
+		Server:    os.Getenv("RABBITMQ_SERVER"),
+	})
+
+	return bus
 }

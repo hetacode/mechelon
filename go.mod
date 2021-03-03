@@ -7,6 +7,9 @@ require (
 	github.com/Microsoft/go-winio v0.4.16 // indirect
 	github.com/confluentinc/confluent-kafka-go v1.5.2 // indirect
 	github.com/containerd/continuity v0.0.0-20201208142359-180525291bb7 // indirect
+	github.com/docker/distribution v2.7.1+incompatible // indirect
+	github.com/docker/docker v20.10.5+incompatible
+	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/gofrs/uuid v4.0.0+incompatible
 	github.com/golang/protobuf v1.4.3 // indirect
 	github.com/google/go-cmp v0.5.4 // indirect

@@ -5,8 +5,11 @@ import (
 	"net/http"
 	"time"
 
+	gtwhandlers "github.com/hetacode/mechelon/services/gateway/handlers"
+
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	gtwcontainer "github.com/hetacode/mechelon/services/gateway/container"
 	"github.com/joho/godotenv"
 )
 
@@ -15,12 +18,14 @@ func main() {
 
 	log.Println("api gateway svc is starting")
 
+	c := gtwcontainer.NewContainer()
+
 	router := mux.NewRouter()
 	clientsRouter := router.PathPrefix("/clients").Subrouter()
 	frontendRouter := router.PathPrefix("/api").Subrouter()
 
-	configureClientHandlers(clientsRouter)
-	configureFrontendHandlers(frontendRouter)
+	gtwhandlers.NewClientsHandlers(c, clientsRouter)
+	gtwhandlers.NewFrontendHandlers(c, frontendRouter)
 
 	corsRouter := useCORS(router)
 	srv := &http.Server{
@@ -32,14 +37,6 @@ func main() {
 
 	log.Println("api gateway svc is running")
 	log.Fatal(srv.ListenAndServe())
-}
-
-func configureClientHandlers(h http.Handler) {
-
-}
-
-func configureFrontendHandlers(h http.Handler) {
-
 }
 
 func useCORS(handler http.Handler) http.Handler {

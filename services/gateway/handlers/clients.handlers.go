@@ -1,6 +1,8 @@
 package gtwhandlers
 
 import (
+	"net/http"
+
 	gtwcontainer "github.com/hetacode/mechelon/services/gateway/container"
 )
 
@@ -11,9 +13,10 @@ type ClientsHandlers struct {
 }
 
 // NewClientsHandlers constructor
-func NewClientsHandlers(c *gtwcontainer.Container) (handlers *ClientsHandlers) {
-	handlers = &ClientsHandlers{
+func NewClientsHandlers(c *gtwcontainer.Container, h http.Handler) {
+	hc := &ClientsHandlers{
 		container: c,
 	}
-	return
+
+	panic(hc)
 }
