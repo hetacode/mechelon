@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"os"
 	"reflect"
 
 	"github.com/EventStore/EventStore-Client-Go/client"
@@ -24,7 +25,7 @@ type ServiceEventStore struct {
 
 // NewServiceEventStore instance
 func NewServiceEventStore(em *goeh.EventsMapper) arch.EventStore {
-	c, e := client.NewClient(&client.Configuration{Address: "localhost:2113", DisableTLS: true}) // TODO: move to env variables
+	c, e := client.NewClient(&client.Configuration{Address: os.Getenv("EVENTSTOREDB_SERVER"), DisableTLS: true})
 	if e != nil {
 		panic(e)
 	}
@@ -97,7 +98,7 @@ func (s *ServiceEventStore) GetEvents(key string, position int64) []goeh.Event {
 	streamName := key + "-events"
 	result := make([]goeh.Event, 0)
 	for {
-		events, err := s.EventStoreClient.ReadStreamEvents(context.Background(), direction.Forwards, streamName, uint64(position), 20, true)
+		events, err := s.EventStoreClient.ReadStreamEvents(context.Background(), direction.Forwards, streamName, uint64(position+1), 20, true)
 		if err != nil {
 			log.Printf("GetEvents err: %s", err)
 			return result

@@ -1,0 +1,13 @@
+version: "3.9"
+services:
+  eventstore:
+    image: eventstore/eventstore:21.2.0-buster-slim
+    ports:
+      - 2113:2113
+      - 1113:1113
+    command: --insecure --run-projections=All --enable-atom-pub-over-http
+  rabbit:
+    image: rabbitmq:3-management
+    ports:
+      - 15673:15672
+      - 5673:5672

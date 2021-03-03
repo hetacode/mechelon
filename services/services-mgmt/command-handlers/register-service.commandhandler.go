@@ -25,8 +25,13 @@ func (e *RegisterServiceCommandHandler) Handle(event goeh.Event) {
 		log.Printf("RegisterServiceCommandHandler SaveEvents err: %s", err)
 	}
 
-	for _, ev := range newEvents {
-		e.Container.EventsProducerBus.Publish(ev)
+	for _, nev := range newEvents {
+		e.Container.EventsProducerBus.Publish(nev)
+
+		// New service for project has been created - let's run worker job
+		if nev.GetType() == new(eventsservicesmgmt.ProjectServiceCreatedEvent).GetType() {
+			e.Container.WorkersManager.CreateWorker(ev.ProjectName, ev.ServiceName)
+		}
 	}
 	log.Printf("RegisterServiceCommandHandler end")
 }

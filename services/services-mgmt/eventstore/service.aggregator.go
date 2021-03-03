@@ -50,6 +50,7 @@ func (a *ServiceAggregator) Replay(state *ServiceStateEntity, events []goeh.Even
 			}
 			a.State.ServiceName = e.ServiceName
 			a.State.ProjectName = e.ProjectName
+			a.ID = fmt.Sprintf("%s-%s", e.ProjectName, e.ServiceName)
 			a.State.Instances = make([]ServiceInstance, 0)
 
 		case new(eventsservicesmgmt.InstanceAddedToServiceEvent).GetType():
@@ -62,14 +63,14 @@ func (a *ServiceAggregator) Replay(state *ServiceStateEntity, events []goeh.Even
 				a.State.Instances = append(a.State.Instances, ServiceInstance{
 					Name:      e.InstanceName,
 					CreatedAt: e.CreateAt,
+					UpdatedAt: e.CreateAt,
 					State:     Active,
 				})
 			}
 
 		case new(eventsservicesmgmt.ProjectServiceRemovedEvent).GetType():
-			e := ev.(*eventsservicesmgmt.ProjectServiceRemovedEvent)
 			a.State.Instances = make([]ServiceInstance, 0)
-			log.Printf("service '%s' has been removed from '%s' project", e.ServiceName, e.ProjectName)
+			a.State = &ServiceStateEntity{}
 
 		case new(eventsservicesmgmt.InstanceRemovedFromServiceEvent).GetType():
 			e := ev.(*eventsservicesmgmt.InstanceRemovedFromServiceEvent)
@@ -95,6 +96,51 @@ func (a *ServiceAggregator) Replay(state *ServiceStateEntity, events []goeh.Even
 				a.State.Instances[idx] = a.State.Instances[len(a.State.Instances)-1]
 				// a.State.Instances[len(a.State.Instances)-1] = ServiceInstance{} - unnecessary?
 				a.State.Instances = a.State.Instances[:len(a.State.Instances)-1]
+			}
+		case new(eventsservicesmgmt.InstanceActivatedEvent).GetType():
+			e := ev.(*eventsservicesmgmt.InstanceActivatedEvent)
+			if a.State.ServiceName == "" {
+				log.Printf("err: InstanceActivatedEvent service '%s' for project '%s' doesn't exist", e.ServiceName, e.ProjectName)
+				break
+			} else {
+				if a.State.Instances == nil {
+					log.Printf("err: InstanceActivatedEvent state instances slice is nil for service '%s' in '%s' project", e.ServiceName, e.ProjectName)
+					return
+				}
+
+				for i, inst := range a.State.Instances {
+					if inst.Name == e.InstanceName {
+						a.State.Instances[i].State = Active
+						a.State.Instances[i].UpdatedAt = e.UpdateAt
+						break
+					}
+				}
+			}
+		case new(eventsservicesmgmt.InstanceGotIdleEvent).GetType():
+			e := ev.(*eventsservicesmgmt.InstanceGotIdleEvent)
+			if a.State.Instances == nil {
+				log.Printf("err: InstanceGotIdleEvent state instances slice is nil for service '%s' in '%s' project", e.ServiceName, e.ProjectName)
+				return
+			}
+
+			for i, inst := range a.State.Instances {
+				if inst.Name == e.InstanceName {
+					a.State.Instances[i].State = Idle
+					break
+				}
+			}
+		case new(eventsservicesmgmt.InstanceGotInactiveEvent).GetType():
+			e := ev.(*eventsservicesmgmt.InstanceGotInactiveEvent)
+			if a.State.Instances == nil {
+				log.Printf("err: InstanceGotInactiveEvent state instances slice is nil for service '%s' in '%s' project", e.ServiceName, e.ProjectName)
+				return
+			}
+
+			for i, inst := range a.State.Instances {
+				if inst.Name == e.InstanceName {
+					a.State.Instances[i].State = InActive
+					break
+				}
 			}
 		}
 		ee := ev.(arch.ExtendedEvent)
@@ -126,6 +172,13 @@ func (a *ServiceAggregator) RegisterNewService(projectName, serviceName, instanc
 		a.pendingEvents = append(a.pendingEvents, createdServiceEv)
 	}
 
+	// Searching for instance with the same name - if exists stop the next steps
+	for _, inst := range a.State.Instances {
+		if inst.Name == instanceName {
+			return
+		}
+	}
+
 	createInstanceEv := &eventsservicesmgmt.InstanceAddedToServiceEvent{
 		EventData:    &goeh.EventData{ID: id},
 		ProjectName:  projectName,
@@ -134,6 +187,17 @@ func (a *ServiceAggregator) RegisterNewService(projectName, serviceName, instanc
 		CreateAt:     time.Now().Unix(),
 	}
 	a.pendingEvents = append(a.pendingEvents, createInstanceEv)
+}
+
+// RemoveProjectService - service should be removed from project
+func (a *ServiceAggregator) RemoveProjectService(projectName, serviceName string) {
+	id := fmt.Sprintf("%s-%s", projectName, serviceName)
+	removedServiceEv := &eventsservicesmgmt.ProjectServiceRemovedEvent{
+		EventData:   &goeh.EventData{ID: id},
+		ProjectName: projectName,
+		ServiceName: serviceName,
+	}
+	a.pendingEvents = append(a.pendingEvents, removedServiceEv)
 }
 
 // RemoveInstanceFromService - just generate an event about removed instance from service
@@ -187,4 +251,53 @@ func (a *ServiceAggregator) RemoveService(projectName, serviceName string) {
 
 	a.pendingEvents = append(a.pendingEvents, removedServiceEv)
 	a.pendingEvents = append(a.pendingEvents, instancesEvents...)
+}
+
+// ServiceInstanceHealthCheck - set activity of service instance
+func (a *ServiceAggregator) ServiceInstanceHealthCheck(projectName, serviceName, instanceName string) {
+	id := fmt.Sprintf("%s-%s", projectName, serviceName)
+
+	found := false
+	for _, inst := range a.State.Instances {
+		if inst.Name == instanceName {
+			found = true
+		}
+	}
+
+	if found {
+		ev := &eventsservicesmgmt.InstanceActivatedEvent{
+			EventData:    &goeh.EventData{ID: id},
+			ProjectName:  projectName,
+			ServiceName:  serviceName,
+			InstanceName: instanceName,
+			UpdateAt:     time.Now().Unix(),
+		}
+		a.pendingEvents = append(a.pendingEvents, ev)
+	} else {
+		log.Printf("ServiceInstanceHealthCheck cannot find '%s' instance in '%s' service for '%s' project", instanceName, serviceName, projectName)
+	}
+}
+
+// SetInstanceAsIdle - instance has long inactivity period, so should be set as idle state
+func (a *ServiceAggregator) SetInstanceAsIdle(instanceName string) {
+	ev := &eventsservicesmgmt.InstanceGotIdleEvent{
+		EventData:    &goeh.EventData{ID: a.ID},
+		ProjectName:  a.State.ProjectName,
+		ServiceName:  a.State.ServiceName,
+		InstanceName: instanceName,
+		UpdateAt:     time.Now().Unix(),
+	}
+	a.pendingEvents = append(a.pendingEvents, ev)
+}
+
+// SetInstanceAsInactive - inactivity state period is too long - set instance as inactive
+func (a *ServiceAggregator) SetInstanceAsInactive(instanceName string) {
+	ev := &eventsservicesmgmt.InstanceGotInactiveEvent{
+		EventData:    &goeh.EventData{ID: a.ID},
+		ProjectName:  a.State.ProjectName,
+		ServiceName:  a.State.ServiceName,
+		InstanceName: instanceName,
+		UpdateAt:     time.Now().Unix(),
+	}
+	a.pendingEvents = append(a.pendingEvents, ev)
 }

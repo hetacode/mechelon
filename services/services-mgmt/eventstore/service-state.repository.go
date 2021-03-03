@@ -17,10 +17,11 @@ func (r *ServiceStateRepository) GetAggregator(projectName, serviceName string) 
 	key := fmt.Sprintf("%s-%s", projectName, serviceName)
 	var state *ServiceStateEntity
 	stateSnap := r.EventStore.GetSnapshot(key, new(ServiceStateEntity))
+
 	if stateSnap != nil {
 		state = stateSnap.(*ServiceStateEntity)
 	}
-	position := int64(0)
+	position := int64(-1)
 	if state != nil {
 		position = state.GetVersion()
 	}
@@ -28,7 +29,7 @@ func (r *ServiceStateRepository) GetAggregator(projectName, serviceName string) 
 	events := r.EventStore.GetEvents(key, position)
 	aggr := NewServiceAggregator()
 	aggr.Replay(state, events)
-	if len(events) >= 20 {
+	if len(events) > 20 {
 		if err := r.EventStore.SaveSnapshot(key, aggr.State); err != nil {
 			panic(err)
 		}

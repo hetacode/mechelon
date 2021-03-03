@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"os"
 
 	gobus "github.com/hetacode/go-bus"
@@ -8,10 +9,13 @@ import (
 	eventsservicesmgmt "github.com/hetacode/mechelon/events/services-mgmt"
 	smgcommandhandlers "github.com/hetacode/mechelon/services/services-mgmt/command-handlers"
 	smgcontainer "github.com/hetacode/mechelon/services/services-mgmt/container"
+	"github.com/joho/godotenv"
 )
 
 func main() {
-	println("service management is starting")
+	godotenv.Load("../../.env.dev")
+
+	log.Println("services management svc is starting")
 	waitCh := make(<-chan os.Signal)
 
 	c := smgcontainer.NewContainer()
@@ -20,7 +24,9 @@ func main() {
 
 	go initEventsConsumer(c.CommandsConsumerBus, eventsMgr)
 
-	println("service management is running")
+	log.Println("services management is running")
+	log.Printf("service bus is waiting for commands on the queue: \033[32m%s\033[0m", os.Getenv("SVC_SERVICES_MGMT_SB_COMMANDS_QUEUE"))
+	log.Printf("events are produced into the service bus exchange: \033[32m%s\033[0m", os.Getenv("SVC_SERVICES_MGMT_SB_EVENTS_EXCHANGE"))
 	<-waitCh
 }
 
@@ -42,4 +48,5 @@ func registerEventHandlers(mgr *goeh.EventsHandlerManager, c *smgcontainer.Conta
 	mgr.Register(new(eventsservicesmgmt.RegisterServiceCommand), &smgcommandhandlers.RegisterServiceCommandHandler{Container: c})
 	mgr.Register(new(eventsservicesmgmt.UnregisterServiceCommand), &smgcommandhandlers.UnregisterServiceCommandHandler{Container: c})
 	mgr.Register(new(eventsservicesmgmt.RemoveServiceInstanceCommand), &smgcommandhandlers.RemoveServiceInstanceCommandHandler{Container: c})
+	mgr.Register(new(eventsservicesmgmt.HealthCheckCommand), &smgcommandhandlers.HealthCheckCommandHandler{Container: c})
 }

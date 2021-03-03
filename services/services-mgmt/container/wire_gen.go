@@ -12,6 +12,8 @@ import (
 	"github.com/hetacode/mechelon/events"
 	"github.com/hetacode/mechelon/services/services-mgmt/eventstore"
 	"github.com/hetacode/mechelon/services/services-mgmt/types"
+	"github.com/hetacode/mechelon/services/services-mgmt/workers"
+	"os"
 )
 
 // Injectors from container.go:
@@ -22,11 +24,13 @@ func NewContainer() *Container {
 	commandsConsumerBus := initCommandsConsumerBusProvider(eventsMapper)
 	eventsProducerBus := initEventsProducerBusProvider(eventsMapper)
 	serviceStateRepository := initServiceStateRepositoryProvider(eventStore)
+	workersManager := initWorkersManagerProvider(serviceStateRepository)
 	container := &Container{
 		EventStore:             eventStore,
 		CommandsConsumerBus:    commandsConsumerBus,
 		EventsProducerBus:      eventsProducerBus,
 		ServiceStateRepository: serviceStateRepository,
+		WorkersManager:         workersManager,
 	}
 	return container
 }
@@ -38,14 +42,20 @@ type Container struct {
 	CommandsConsumerBus    smgtypes.CommandsConsumerBus
 	EventsProducerBus      smgtypes.EventsProducerBus
 	ServiceStateRepository *smgeventstore.ServiceStateRepository
+	WorkersManager         *smgworkers.WorkersManager
+}
+
+func initWorkersManagerProvider(repository *smgeventstore.ServiceStateRepository) *smgworkers.WorkersManager {
+	mgr := smgworkers.NewWorkersManager(repository)
+	return mgr
 }
 
 func initEventsProducerBusProvider(em *goeh.EventsMapper) smgtypes.EventsProducerBus {
 	kind := gobus.RabbitMQServiceBusOptionsFanOutKind
 	bus := gobus.NewRabbitMQServiceBus(em, &gobus.RabbitMQServiceBusOptions{
 		Kind:      &kind,
-		Exchanage: "services-mgmt-events-ex",
-		Server:    "amqp://localhost:5673",
+		Exchanage: os.Getenv("SVC_SERVICES_MGMT_SB_EVENTS_EXCHANGE"),
+		Server:    os.Getenv("RABBITMQ_SERVER"),
 	})
 
 	return bus
@@ -62,9 +72,9 @@ func initCommandsConsumerBusProvider(em *goeh.EventsMapper) smgtypes.CommandsCon
 	kind := gobus.RabbitMQServiceBusOptionsFanOutKind
 	bus := gobus.NewRabbitMQServiceBus(em, &gobus.RabbitMQServiceBusOptions{
 		Kind:      &kind,
-		Exchanage: "services-mgmt-ex",
-		Queue:     "services-mgmt-commands-queue",
-		Server:    "amqp://localhost:5673",
+		Exchanage: os.Getenv("SVC_SERVICES_MGMT_SB_COMMANDS_EXCHANGE"),
+		Queue:     os.Getenv("SVC_SERVICES_MGMT_SB_COMMANDS_QUEUE"),
+		Server:    os.Getenv("RABBITMQ_SERVER"),
 	})
 
 	return bus
