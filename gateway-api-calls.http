@@ -1,0 +1,42 @@
+@endpointClients=http://localhost:5000/clients
+@projectName=mechelon
+@paymentsServiceName=payments
+
+### Create project with service and instance
+post {{endpointClients}}/register
+Content-Type: application/json
+
+{
+    "project_name": "{{projectName}}",
+    "service_name": "{{paymentsServiceName}}",
+    "instance_name": "pay-1"
+}
+
+### Again with second instance
+post {{endpointClients}}/register
+Content-Type: application/json
+
+{
+    "project_name": "{{projectName}}",
+    "service_name": "{{paymentsServiceName}}",
+    "instance_name": "pay-2"
+}
+
+### Remove one instance
+post {{endpointClients}}/remove
+Content-Type: application/json
+
+{
+    "project_name": "{{projectName}}",
+    "service_name": "{{paymentsServiceName}}",
+    "instance_name": "pay-1"
+}
+
+### Unregister whole service
+post {{endpointClients}}/unregister
+Content-Type: application/json
+
+{
+    "project_name": "{{projectName}}",
+    "service_name": "{{paymentsServiceName}}"
+}
