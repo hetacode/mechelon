@@ -14,6 +14,7 @@ require (
 	github.com/hashicorp/go-uuid v1.0.2 // indirect
 	github.com/hetacode/go-bus v0.0.3
 	github.com/hetacode/go-eh v0.0.2
+	github.com/joho/godotenv v1.3.0
 	github.com/kr/text v0.2.0 // indirect
 	github.com/lib/pq v1.9.0 // indirect
 	github.com/sirupsen/logrus v1.7.0 // indirect

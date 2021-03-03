@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"os"
 	"reflect"
 
 	"github.com/EventStore/EventStore-Client-Go/client"
@@ -24,7 +25,7 @@ type ServiceEventStore struct {
 
 // NewServiceEventStore instance
 func NewServiceEventStore(em *goeh.EventsMapper) arch.EventStore {
-	c, e := client.NewClient(&client.Configuration{Address: "localhost:2113", DisableTLS: true}) // TODO: move to env variables
+	c, e := client.NewClient(&client.Configuration{Address: os.Getenv("EVENTSTOREDB_SERVER"), DisableTLS: true})
 	if e != nil {
 		panic(e)
 	}
