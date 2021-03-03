@@ -24,7 +24,10 @@ func NewClientsHandlers(c *gtwcontainer.Container, h *mux.Router) {
 		container: c,
 	}
 
-	h.HandleFunc("/register", hc.RegisterServiceHandler)
+	h.HandleFunc("/register", hc.RegisterServiceHandler).Methods(http.MethodPost)
+	h.HandleFunc("/unregister", hc.UnregisterServiceHandler).Methods(http.MethodPost)
+	h.HandleFunc("/remove", hc.RemoveServiceInstanceHandler).Methods(http.MethodPost)
+	h.HandleFunc("/health", hc.HealthCheckHandler).Methods(http.MethodPost)
 }
 
 // RegisterServiceBody request
@@ -58,6 +61,124 @@ func (h *ClientsHandlers) RegisterServiceHandler(w http.ResponseWriter, r *http.
 		ProjectName:  body.ProjectName,
 		ServiceName:  body.ServiceName,
 		InstanceName: body.InstanceName,
+	}
+
+	if err := h.container.CommandsBusProducer.Publish(command); err != nil {
+		http.Error(w, "send command: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+// UnregisterServiceBody request
+type UnregisterServiceBody struct {
+	ProjectName string `json:"project_name"`
+	// should be unique per project
+	ServiceName string `json:"service_name"`
+}
+
+// UnregisterServiceHandler - handle endpoint to unregister whole project service with all connected instances
+func (h *ClientsHandlers) UnregisterServiceHandler(w http.ResponseWriter, r *http.Request) {
+	bb, err := ioutil.ReadAll(r.Body)
+
+	if err != nil {
+		http.Error(w, "body error", http.StatusBadRequest)
+		return
+	}
+
+	var body *UnregisterServiceBody
+	if err := json.Unmarshal(bb, &body); err != nil {
+		http.Error(w, "body parse", http.StatusBadRequest)
+		return
+	}
+
+	id, _ := uuid.NewV4()
+	command := &eventsservicesmgmt.UnregisterServiceCommand{
+		EventData:   &goeh.EventData{ID: id.String()},
+		ProjectName: body.ProjectName,
+		ServiceName: body.ServiceName,
+	}
+
+	if err := h.container.CommandsBusProducer.Publish(command); err != nil {
+		http.Error(w, "send command: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+// RemoveServiceInstanceBody request
+type RemoveServiceInstanceBody struct {
+	ProjectName string `json:"project_name"`
+	// should be unique per project
+	ServiceName string `json:"service_name"`
+
+	InstanceNAme string `json:"intance_name"`
+}
+
+// RemoveServiceInstanceHandler - handle endpoint to removing one given instance from service of project
+func (h *ClientsHandlers) RemoveServiceInstanceHandler(w http.ResponseWriter, r *http.Request) {
+	bb, err := ioutil.ReadAll(r.Body)
+
+	if err != nil {
+		http.Error(w, "body error", http.StatusBadRequest)
+		return
+	}
+
+	var body *RemoveServiceInstanceBody
+	if err := json.Unmarshal(bb, &body); err != nil {
+		http.Error(w, "body parse", http.StatusBadRequest)
+		return
+	}
+
+	id, _ := uuid.NewV4()
+	command := &eventsservicesmgmt.RemoveServiceInstanceCommand{
+		EventData:    &goeh.EventData{ID: id.String()},
+		ProjectName:  body.ProjectName,
+		ServiceName:  body.ServiceName,
+		InstanceName: body.InstanceNAme,
+	}
+
+	if err := h.container.CommandsBusProducer.Publish(command); err != nil {
+		http.Error(w, "send command: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+// HealthCheckBody request
+type HealthCheckBody struct {
+	ProjectName string `json:"project_name"`
+	// should be unique per project
+	ServiceName string `json:"service_name"`
+
+	InstanceNAme string `json:"intance_name"`
+}
+
+// HealthCheckHandler - handle endpoint to sending health check presence of instance of service
+// Cyclic period to call this service should be about 10 sec
+func (h *ClientsHandlers) HealthCheckHandler(w http.ResponseWriter, r *http.Request) {
+	bb, err := ioutil.ReadAll(r.Body)
+
+	if err != nil {
+		http.Error(w, "body error", http.StatusBadRequest)
+		return
+	}
+
+	var body *HealthCheckBody
+	if err := json.Unmarshal(bb, &body); err != nil {
+		http.Error(w, "body parse", http.StatusBadRequest)
+		return
+	}
+
+	id, _ := uuid.NewV4()
+	command := &eventsservicesmgmt.HealthCheckCommand{
+		EventData:    &goeh.EventData{ID: id.String()},
+		ProjectName:  body.ProjectName,
+		ServiceName:  body.ServiceName,
+		InstanceName: body.InstanceNAme,
 	}
 
 	if err := h.container.CommandsBusProducer.Publish(command); err != nil {
