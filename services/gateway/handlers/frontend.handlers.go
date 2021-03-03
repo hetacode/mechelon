@@ -1,8 +1,7 @@
 package gtwhandlers
 
 import (
-	"net/http"
-
+	"github.com/gorilla/mux"
 	gtwcontainer "github.com/hetacode/mechelon/services/gateway/container"
 )
 
@@ -12,7 +11,7 @@ type FrontendHandlers struct {
 }
 
 // NewFrontendHandlers constructor
-func NewFrontendHandlers(c *gtwcontainer.Container, h http.Handler) {
+func NewFrontendHandlers(c *gtwcontainer.Container, h *mux.Router) {
 	hc := &FrontendHandlers{
 		container: c,
 	}
