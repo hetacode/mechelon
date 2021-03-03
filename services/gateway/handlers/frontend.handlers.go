@@ -16,5 +16,5 @@ func NewFrontendHandlers(c *gtwcontainer.Container, h *mux.Router) {
 		container: c,
 	}
 
-	panic(hc) // TODO: to implement
+	print(hc)
 }

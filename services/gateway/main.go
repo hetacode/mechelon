@@ -36,7 +36,8 @@ func main() {
 		WriteTimeout: time.Second * 5,
 	}
 
-	log.Println("api gateway svc is running")
+	log.Printf("api gateway svc is listening on port: \033[32m%s\033[0m", os.Getenv("SVC_API_GATEWAY_PORT"))
+	log.Printf("events are produced into the service bus exchange: \033[32m%s\033[0m", os.Getenv("SVC_SERVICES_MGMT_SB_COMMANDS_EXCHANGE"))
 	log.Fatal(srv.ListenAndServe())
 }
 
