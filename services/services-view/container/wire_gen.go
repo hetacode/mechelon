@@ -5,10 +5,21 @@
 
 package svvcontainer
 
+import (
+	"github.com/hetacode/go-bus"
+	"github.com/hetacode/go-eh"
+	"github.com/hetacode/mechelon/events"
+	"os"
+)
+
 // Injectors from container.go:
 
 func NewContainer() *Container {
-	container := &Container{}
+	eventsMapper := events.NewEventsMapper()
+	serviceBus := initEventsConsumerBusProvider(eventsMapper)
+	container := &Container{
+		EventsConsumerBus: serviceBus,
+	}
 	return container
 }
 
@@ -16,4 +27,17 @@ func NewContainer() *Container {
 
 // Container struct keep of all dependencies
 type Container struct {
+	EventsConsumerBus gobus.ServiceBus
+}
+
+func initEventsConsumerBusProvider(em *goeh.EventsMapper) gobus.ServiceBus {
+	kind := gobus.RabbitMQServiceBusOptionsFanOutKind
+	bus := gobus.NewRabbitMQServiceBus(em, &gobus.RabbitMQServiceBusOptions{
+		Kind:      &kind,
+		Exchanage: os.Getenv("SVC_SERVICES_MGMT_SB_EVENTS_EXCHANGE"),
+		Queue:     os.Getenv("SVC_SERVICES_VIEW_SB_EVENTS_QUEUE"),
+		Server:    os.Getenv("RABBITMQ_SERVER"),
+	})
+
+	return bus
 }
