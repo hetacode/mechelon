@@ -114,7 +114,7 @@ type RemoveServiceInstanceBody struct {
 	// should be unique per project
 	ServiceName string `json:"service_name"`
 
-	InstanceNAme string `json:"intance_name"`
+	InstanceName string `json:"instance_name"`
 }
 
 // RemoveServiceInstanceHandler - handle endpoint to removing one given instance from service of project
@@ -137,7 +137,7 @@ func (h *ClientsHandlers) RemoveServiceInstanceHandler(w http.ResponseWriter, r 
 		EventData:    &goeh.EventData{ID: id.String()},
 		ProjectName:  body.ProjectName,
 		ServiceName:  body.ServiceName,
-		InstanceName: body.InstanceNAme,
+		InstanceName: body.InstanceName,
 	}
 
 	if err := h.container.CommandsBusProducer.Publish(command); err != nil {
@@ -154,7 +154,7 @@ type HealthCheckBody struct {
 	// should be unique per project
 	ServiceName string `json:"service_name"`
 
-	InstanceNAme string `json:"intance_name"`
+	InstanceName string `json:"instance_name"`
 }
 
 // HealthCheckHandler - handle endpoint to sending health check presence of instance of service
@@ -178,7 +178,7 @@ func (h *ClientsHandlers) HealthCheckHandler(w http.ResponseWriter, r *http.Requ
 		EventData:    &goeh.EventData{ID: id.String()},
 		ProjectName:  body.ProjectName,
 		ServiceName:  body.ServiceName,
-		InstanceName: body.InstanceNAme,
+		InstanceName: body.InstanceName,
 	}
 
 	if err := h.container.CommandsBusProducer.Publish(command); err != nil {
