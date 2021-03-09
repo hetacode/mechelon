@@ -6,10 +6,14 @@
 package svvcontainer
 
 import (
+	"context"
 	"github.com/hetacode/go-bus"
 	"github.com/hetacode/go-eh"
 	"github.com/hetacode/mechelon/events"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"os"
+	"time"
 )
 
 // Injectors from container.go:
@@ -17,8 +21,10 @@ import (
 func NewContainer() *Container {
 	eventsMapper := events.NewEventsMapper()
 	serviceBus := initEventsConsumerBusProvider(eventsMapper)
+	collection := initMongoDBClientProvider()
 	container := &Container{
-		EventsConsumerBus: serviceBus,
+		EventsConsumerBus:         serviceBus,
+		ProjectsMongoDBCollection: collection,
 	}
 	return container
 }
@@ -27,7 +33,18 @@ func NewContainer() *Container {
 
 // Container struct keep of all dependencies
 type Container struct {
-	EventsConsumerBus gobus.ServiceBus
+	EventsConsumerBus         gobus.ServiceBus
+	ProjectsMongoDBCollection *mongo.Collection
+}
+
+func initMongoDBClientProvider() *mongo.Collection {
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*15)
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(os.Getenv("MONGODB_SERVER")))
+	if err != nil {
+		panic(err)
+	}
+	collection := client.Database(os.Getenv("SVC_SERVICES_VIEW_DB_NAME")).Collection(os.Getenv("SVC_SERVICES_VIEW_DB_PROJECTS_COLLECTION"))
+	return collection
 }
 
 func initEventsConsumerBusProvider(em *goeh.EventsMapper) gobus.ServiceBus {

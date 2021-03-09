@@ -4,8 +4,11 @@ import (
 	"log"
 	"os"
 
+	svveventhandlers "github.com/hetacode/mechelon/services/services-view/event-handlers"
+
 	gobus "github.com/hetacode/go-bus"
 	goeh "github.com/hetacode/go-eh"
+	eventsservicesmgmt "github.com/hetacode/mechelon/events/services-mgmt"
 	svvcontainer "github.com/hetacode/mechelon/services/services-view/container"
 
 	"github.com/joho/godotenv"
@@ -19,7 +22,7 @@ func main() {
 
 	container := svvcontainer.NewContainer()
 	eventsMgr := goeh.NewEventsHandlerManager()
-	registerEventHandlers(eventsMgr)
+	registerEventHandlers(container, eventsMgr)
 	go initEventsConsumer(container.EventsConsumerBus, eventsMgr)
 
 	log.Println("services view is running")
@@ -40,6 +43,6 @@ func initEventsConsumer(bus gobus.ServiceBus, mgr *goeh.EventsHandlerManager) {
 	}
 }
 
-func registerEventHandlers(mgr *goeh.EventsHandlerManager) {
-
+func registerEventHandlers(c *svvcontainer.Container, mgr *goeh.EventsHandlerManager) {
+	mgr.Register(new(eventsservicesmgmt.ProjectServiceCreatedEvent), &svveventhandlers.ProjectServiceCreatedEventHandler{Container: c})
 }
