@@ -26,7 +26,8 @@ func (e *ProjectServiceCreatedEventHandler) Handle(event goeh.Event) {
 
 	// Check if project and service exists
 	filter := bson.M{
-		"name": ev.ProjectName,
+		"project_name": ev.ProjectName,
+		"service_name": ev.ServiceName,
 	}
 
 	var project *vssdb.ServiceEntity
