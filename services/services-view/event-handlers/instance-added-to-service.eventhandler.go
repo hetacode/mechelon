@@ -3,7 +3,6 @@ package svveventhandlers
 import (
 	"context"
 	"log"
-	"time"
 
 	goeh "github.com/hetacode/go-eh"
 	eventsservicesmgmt "github.com/hetacode/mechelon/events/services-mgmt"
@@ -52,11 +51,10 @@ func (e *InstanceAddedToServiceEventHandler) Handle(event goeh.Event) {
 		}
 	}
 
-	now := time.Now().Unix()
 	project.Instances = append(project.Instances, vssdb.InstanceEntity{
 		Name:      ev.InstanceName,
-		CreatedAt: now,
-		UpdatedAt: now,
+		CreatedAt: ev.CreateAt,
+		UpdatedAt: ev.CreateAt,
 		Status:    string(smgeventstore.Active),
 	})
 
