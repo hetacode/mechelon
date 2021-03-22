@@ -29,40 +29,28 @@ func (e *ProjectServiceCreatedEventHandler) Handle(event goeh.Event) {
 		"name": ev.ProjectName,
 	}
 
-	var project *vssdb.ProjectEntity
+	var project *vssdb.ServiceEntity
 	res := e.Container.ProjectsMongoDBCollection.FindOne(context.Background(), filter)
 	if res.Err() == mongo.ErrNoDocuments {
-		project = &vssdb.ProjectEntity{
-			Name: ev.ProjectName,
-			Services: []vssdb.ServiceEntity{
-				{Name: ev.ServiceName},
-			},
+		project = &vssdb.ServiceEntity{
+			ProjectName: ev.ProjectName,
+			ServiceName: ev.ServiceName,
+			Instances:   make([]vssdb.InstanceEntity, 0),
 		}
 
 		_, err := e.Container.ProjectsMongoDBCollection.InsertOne(context.Background(), project)
 
 		if err != nil {
-			log.Printf("\033[31mProjectServiceCreatedEventHandler insert project err: %s\033[0m", err)
+			log.Printf("\033[31mProjectServiceCreatedEventHandler insert service project err: %s\033[0m", err)
 			return
 		}
 		log.Printf("ProjectServiceCreatedEventHandler project '%s' with service '%s' has been added", ev.ProjectName, ev.ServiceName)
 		return
 	} else if res.Err() != nil {
-		log.Printf("\033[31mProjectServiceCreatedEventHandler find project err: %s\033[0m", res.Err())
+		log.Printf("\033[31mProjectServiceCreatedEventHandler find service project err: %s\033[0m", res.Err())
 		return
-	}
-
-	err := res.Decode(&project)
-	if err != nil {
-		log.Printf("\033[31mProjectServiceCreatedEventHandler decode project entity err: %s\033[0m", err)
-		return
-	}
-	project.Services = append(project.Services, vssdb.ServiceEntity{Name: ev.ServiceName})
-
-	_, err = e.Container.ProjectsMongoDBCollection.UpdateOne(context.Background(), filter, bson.M{"$set": &project})
-	if err != nil {
-		log.Printf("\033[31mProjectServiceCreatedEventHandler update project entity err: %s\033[0m", err)
-		return
+	} else {
+		log.Printf("ProjectServiceCreatedEventHandler project '%s' with service '%s' exists", ev.ProjectName, ev.ServiceName)
 	}
 
 	log.Printf("ProjectServiceCreatedEventHandler end")

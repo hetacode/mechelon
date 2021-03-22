@@ -15,10 +15,10 @@ import (
 	svvcontainer "github.com/hetacode/mechelon/services/services-view/container"
 	svvdb "github.com/hetacode/mechelon/services/services-view/db"
 	"github.com/joho/godotenv"
+	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"gotest.tools/assert"
 )
 
 func setup() *svvcontainer.Container {
@@ -66,17 +66,16 @@ func TestShouldCreateProjectWithServiceOnce(t *testing.T) {
 	h.Handle(e)
 
 	// Checks
-	res := c.ProjectsMongoDBCollection.FindOne(context.Background(), bson.M{"name": "test-project"})
+	res := c.ProjectsMongoDBCollection.FindOne(context.Background(), bson.M{"project_name": "test-project", "service_name": "test-project-service"})
 	if res.Err() != nil {
 		t.Error(res.Err())
 	}
 
-	var project *svvdb.ProjectEntity
+	var project *svvdb.ServiceEntity
 	res.Decode(&project)
 
-	assert.Equal(t, project.Name, "test-project")
-	assert.Equal(t, len(project.Services), 1)
-	assert.Equal(t, project.Services[0].Name, "test-project-service")
+	assert.NotNil(t, project)
+	assert.Equal(t, project.ProjectName, "test-project")
 }
 
 // TestShouldCreateOneProjectWithTwoService test
@@ -106,16 +105,23 @@ func TestShouldCreateOneProjectWithTwoService(t *testing.T) {
 	h.Handle(e2)
 
 	// Checks
-	res := c.ProjectsMongoDBCollection.FindOne(context.Background(), bson.M{"name": "test-project"})
+	res, err := c.ProjectsMongoDBCollection.Find(context.Background(), bson.M{"project_name": "test-project"})
+	if err != nil {
+		t.Error(err)
+	}
 	if res.Err() != nil {
 		t.Error(res.Err())
 	}
 
-	var project *svvdb.ProjectEntity
-	res.Decode(&project)
+	var projects []svvdb.ServiceEntity
+	if err := res.All(context.Background(), &projects); err != nil {
+		t.Error(err)
+	}
 
-	assert.Equal(t, project.Name, "test-project")
-	assert.Equal(t, len(project.Services), 2)
-	assert.Equal(t, project.Services[0].Name, "test-project-service-1")
-	assert.Equal(t, project.Services[1].Name, "test-project-service-2")
+	assert.Len(t, projects, 2)
+	assert.Equal(t, projects[0].ProjectName, "test-project")
+	assert.Equal(t, projects[0].ServiceName, "test-project-service-1")
+	assert.Equal(t, projects[1].ProjectName, "test-project")
+	assert.Equal(t, projects[1].ServiceName, "test-project-service-2")
+
 }
